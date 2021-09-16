@@ -3,13 +3,18 @@
  */
 package profile;
 
+import java.io.File;
+
 /**
  * @author bradpeters
  *
  */
 public class CompareContext
 {
+    public CompareContext parent;
+    public File file;
     public boolean directory;
+    public int level;
     public String path;
     public long numFilesOriginal;
     public long numFilesRevised;
@@ -48,13 +53,18 @@ public class CompareContext
 
     public static String getHeader()
     {
-	return ("directory, path,numFilesOriginal,numFilesRevised,numFilesAdded,numFilesDeleted,numFilesModified,numLinesOriginal,numLinesRevised,numLinesAdded,numLinesDeleted,numLinesModified,numBytesOriginal,numBytesRevised,numBytesAdded,numBytesDeleted,numBytesModified");
+	return ("level,directory,path,numFilesOriginal,numFilesRevised,numFilesAdded,numFilesDeleted,numFilesModified,numLinesOriginal,numLinesRevised,numLinesAdded,numLinesDeleted,numLinesModified,numBytesOriginal,numBytesRevised,numBytesAdded,numBytesDeleted,numBytesModified");
+    }
+
+    public String toString()
+    {
+	return getLine();
     }
 
     public String getLine()
     {
-	return ((directory ? "dir" : "file") + "," + path + "," + numFilesOriginal + "," + numFilesRevised + ","
-		+ numFilesAdded + "," + numFilesDeleted + "," + numFilesModified + "," + numLinesOriginal + ","
+	return (level + "," + (directory ? "dir" : "file") + "," + path + "," + numFilesOriginal + "," + numFilesRevised
+		+ "," + numFilesAdded + "," + numFilesDeleted + "," + numFilesModified + "," + numLinesOriginal + ","
 		+ numLinesRevised + "," + numLinesAdded + "," + numLinesDeleted + "," + numLinesModified + ","
 		+ numBytesOriginal + "," + numBytesRevised + "," + numBytesAdded + "," + numBytesDeleted + ","
 		+ numBytesModified);

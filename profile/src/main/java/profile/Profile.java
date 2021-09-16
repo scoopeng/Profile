@@ -6,7 +6,11 @@ package profile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.github.difflib.DiffUtils;
 import com.github.difflib.patch.AbstractDelta;
@@ -35,52 +39,99 @@ public class Profile
 	}
 	String originalPath = args[0];
 	String revisedPath = args[1];
+	Map<String, CompareContext> originalFiles = new HashMap<>();
+	Map<String, CompareContext> revisedFiles = new HashMap<>();
+	CompareContext originalRoot = walkDirectoryTree(originalPath, "/", originalFiles, 1, null);
+	CompareContext revisedRoot = walkDirectoryTree(revisedPath, "/", revisedFiles, 1, null);
+
+	Set<String> deletedFiles = new HashSet<String>(originalFiles.keySet());
+	deletedFiles.removeAll(revisedFiles.keySet());
+	Set<String> newFiles = new HashSet<String>(revisedFiles.keySet());
+	newFiles.removeAll(originalFiles.keySet());
+	Set<String> commonFiles = new HashSet<String>(originalFiles.keySet());
+	commonFiles.retainAll(revisedFiles.keySet());
+	for (String key : commonFiles)
+	{
+	    CompareContext originalcc = originalFiles.get(key);
+	    CompareContext revisedcc = revisedFiles.get(key);
+	    if (!originalcc.directory && !revisedcc.directory)
+	    {
+		compareFiles(originalcc, revisedcc);
+	    }
+	}
+	for (String key : deletedFiles)
+	{
+	    CompareContext originalcc = originalFiles.get(key);
+	    if (!originalcc.directory)
+	    {
+		profileFile(originalcc, true);
+	    }
+	}
+	for (String key : newFiles)
+	{
+	    CompareContext revisedcc = revisedFiles.get(key);
+	    if (!revisedcc.directory)
+	    {
+		profileFile(revisedcc, false);
+	    }
+	}
+	originalRoot.add(revisedRoot);
+	// Print out
 	System.out.println(CompareContext.getHeader());
-	CompareContext cc = walkDirectories(originalPath, revisedPath, "/");
-	int a = 1;
+	System.out.println("Common");
+	for (String key : commonFiles)
+	{
+	    CompareContext originalcc = originalFiles.get(key);
+	    System.out.println(originalcc.toString());
+	}
+	System.out.println("Deleted");
+	for (String key : deletedFiles)
+	{
+	    CompareContext originalcc = originalFiles.get(key);
+	    System.out.println(originalcc.toString());
+	}
+	System.out.println("Added");
+	for (String key : newFiles)
+	{
+	    CompareContext revisedcc = revisedFiles.get(key);
+	    System.out.println(revisedcc.toString());
+	}
     }
 
-    public static CompareContext walkDirectories(String originalRoot, String revisedRoot, String path)
+    private static CompareContext walkDirectoryTree(String root, String path, Map<String, CompareContext> fileMap,
+	    int level, CompareContext parent)
     {
-	File originalFile = new File(originalRoot + path);
-	File revisedFile = new File(revisedRoot + path);
-	CompareContext cc = new CompareContext();
-	cc.path = path;
-	File[] originals = originalFile.listFiles();
-	File[] revised = revisedFile.listFiles();
-	for (File of : originals)
+	File dir = new File(root + path);
+	if (!validFile(dir) || !dir.isDirectory())
 	{
-	    if (!validFile(of))
+	    return null;
+	}
+	CompareContext cc = new CompareContext();
+	cc.parent = parent;
+	cc.directory = true;
+	cc.file = dir;
+	cc.level = level;
+	cc.path = path;
+	fileMap.put(path, cc);
+	File[] files = dir.listFiles();
+	for (File f : files)
+	{
+	    if (!validFile(f))
 	    {
 		continue;
 	    }
-	    for (File rf : revised)
+	    if (f.isFile())
 	    {
-		if (!validFile(rf))
-		{
-		    continue;
-		}
-		if (of.getName().equals(rf.getName()))
-		{
-		    if (of.isDirectory() && rf.isDirectory())
-		    {
-			CompareContext newcc = walkDirectories(originalRoot, revisedRoot, path + of.getName() + "/");
-			newcc.directory = true;
-			if (newcc != null)
-			{
-			    System.out.println(newcc.getLine());
-			    cc.add(newcc);
-			}
-		    } else if (of.isFile() && rf.isFile())
-		    {
-			CompareContext newcc = compareFiles(originalRoot, revisedRoot, path + of.getName());
-			if (newcc != null)
-			{
-			    System.out.println(newcc.getLine());
-			    cc.add(newcc);
-			}
-		    }
-		}
+		CompareContext fcc = new CompareContext();
+		fcc.parent = cc;
+		fcc.directory = false;
+		fcc.file = f;
+		fcc.level = level + 1;
+		fcc.path = path + f.getName() + "/";
+		fileMap.put(fcc.path, fcc);
+	    } else
+	    {
+		walkDirectoryTree(root, path + f.getName() + "/", fileMap, level + 1, cc);
 	    }
 	}
 	return cc;
@@ -106,12 +157,61 @@ public class Profile
 	return false;
     }
 
-    private static CompareContext compareFiles(String originalRoot, String revisedRoot, String path)
+    /**
+     * Profile files that were either deleted or added (not deleted). Assumes
+     * modified files analyzed with compareFiles
+     * 
+     * @param cc
+     * @param deleted
+     */
+    private static void profileFile(CompareContext cc, boolean deleted)
     {
-	CompareContext cc = new CompareContext();
-	cc.path = path;
-	File originalFile = new File(originalRoot + path);
-	File revisedFile = new File(revisedRoot + path);
+	try
+	{
+	    List<String> lines = Files.readAllLines(cc.file.toPath());
+	    if (deleted)
+	    {
+		cc.numFilesOriginal = 1;
+		cc.numBytesOriginal = cc.file.length();
+		cc.numLinesOriginal = lines.size();
+		cc.numFilesDeleted = 1;
+		cc.numLinesDeleted = cc.numLinesOriginal;
+		cc.numBytesDeleted = cc.numBytesOriginal;
+	    } else
+	    {
+		cc.numFilesRevised = 1;
+		cc.numBytesRevised = cc.file.length();
+		cc.numLinesRevised = lines.size();
+		cc.numFilesAdded = 1;
+		cc.numLinesAdded = cc.numLinesRevised;
+		cc.numBytesAdded = cc.numBytesRevised;
+	    }
+	    // Add up the tree
+	    CompareContext parentcc = cc.parent;
+	    while (parentcc != null)
+	    {
+		parentcc.add(cc);
+		parentcc = parentcc.parent;
+	    }
+	} catch (IOException e)
+	{
+	    e.printStackTrace();
+	    return;
+	}
+    }
+
+    /**
+     * Compare files and update the statistics in the original compare context
+     * 
+     * @param originalcc
+     * @param revisedcc
+     * @return
+     */
+    private static void compareFiles(CompareContext originalcc, CompareContext revisedcc)
+    {
+	File originalFile = originalcc.file;
+	File revisedFile = revisedcc.file;
+	CompareContext cc = originalcc;
 	// build simple lists of the lines of the two testfiles
 	List<String> original = null;
 	List<String> revised = null;
@@ -119,25 +219,18 @@ public class Profile
 	{
 	    if (originalFile.exists() && !revisedFile.exists())
 	    {
-		original = Files.readAllLines(originalFile.toPath());
-		cc.numFilesOriginal = 1;
-		cc.numFilesDeleted = 1;
-		cc.numBytesOriginal = originalFile.length();
-		cc.numLinesOriginal = original.size();
-		return cc;
+		// Should not get here
+		return;
 	    }
 	    if (!originalFile.exists() && revisedFile.exists())
 	    {
-		revised = Files.readAllLines(revisedFile.toPath());
-		cc.numFilesRevised = 1;
-		cc.numFilesAdded = 1;
-		cc.numBytesRevised = revisedFile.length();
-		cc.numLinesRevised = revised.size();
-		return cc;
+		// Should not get here
+		return;
 	    }
 	    if (!originalFile.exists() && !revisedFile.exists())
 	    {
-		return null;
+		// Should not get here
+		return;
 	    } else
 	    {
 		cc.numFilesOriginal = 1;
@@ -151,12 +244,12 @@ public class Profile
 	    }
 	} catch (IOException e)
 	{
-	    // TODO Auto-generated catch block
 	    e.printStackTrace();
+	    return;
 	}
 	if (original == null || revised == null)
 	{
-	    return null;
+	    return;
 	}
 
 	// compute the patch: this is the diffutils part
@@ -197,7 +290,18 @@ public class Profile
 		cc.numBytesDeleted += sc.bytesDeleted;
 	    }
 	}
-	return cc;
+	if (patch.getDeltas().size() > 0)
+	{
+	    cc.numFilesModified = 1;
+	}
+	// Add up the tree
+	CompareContext parentcc = cc.parent;
+	while (parentcc != null)
+	{
+	    parentcc.add(cc);
+	    parentcc = parentcc.parent;
+	}
+	return;
     }
 
     private static class StringChanges
