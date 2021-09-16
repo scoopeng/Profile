@@ -4,6 +4,8 @@
 package profile;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author bradpeters
@@ -11,10 +13,12 @@ import java.io.File;
  */
 public class CompareContext
 {
-    public CompareContext parent;
-    public File file;
+    List<CompareContext> children = new ArrayList<>();
+    public File originalFile;
+    public File revisedFile;
     public boolean directory;
     public int level;
+    public String type;
     public String path;
     public long numFilesOriginal;
     public long numFilesRevised;
@@ -58,10 +62,10 @@ public class CompareContext
 
     public String toString()
     {
-	return getLine("");
+	return getLine();
     }
 
-    public String getLine(String type)
+    public String getLine()
     {
 	return (type + "," + level + "," + (directory ? "dir" : "file") + "," + path + "," + numFilesOriginal + ","
 		+ numFilesRevised + "," + numFilesAdded + "," + numFilesDeleted + "," + numFilesModified + ","
