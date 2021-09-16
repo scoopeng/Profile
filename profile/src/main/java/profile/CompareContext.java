@@ -53,20 +53,20 @@ public class CompareContext
 
     public static String getHeader()
     {
-	return ("level,directory,path,numFilesOriginal,numFilesRevised,numFilesAdded,numFilesDeleted,numFilesModified,numLinesOriginal,numLinesRevised,numLinesAdded,numLinesDeleted,numLinesModified,numBytesOriginal,numBytesRevised,numBytesAdded,numBytesDeleted,numBytesModified");
+	return ("type,level,directory,path,numFilesOriginal,numFilesRevised,numFilesAdded,numFilesDeleted,numFilesModified,numLinesOriginal,numLinesRevised,numLinesAdded,numLinesDeleted,numLinesModified,numBytesOriginal,numBytesRevised,numBytesAdded,numBytesDeleted,numBytesModified");
     }
 
     public String toString()
     {
-	return getLine();
+	return getLine("");
     }
 
-    public String getLine()
+    public String getLine(String type)
     {
-	return (level + "," + (directory ? "dir" : "file") + "," + path + "," + numFilesOriginal + "," + numFilesRevised
-		+ "," + numFilesAdded + "," + numFilesDeleted + "," + numFilesModified + "," + numLinesOriginal + ","
-		+ numLinesRevised + "," + numLinesAdded + "," + numLinesDeleted + "," + numLinesModified + ","
-		+ numBytesOriginal + "," + numBytesRevised + "," + numBytesAdded + "," + numBytesDeleted + ","
-		+ numBytesModified);
+	return (type + "," + level + "," + (directory ? "dir" : "file") + "," + path + "," + numFilesOriginal + ","
+		+ numFilesRevised + "," + numFilesAdded + "," + numFilesDeleted + "," + numFilesModified + ","
+		+ numLinesOriginal + "," + numLinesRevised + "," + numLinesAdded + "," + numLinesDeleted + ","
+		+ numLinesModified + "," + numBytesOriginal + "," + numBytesRevised + "," + numBytesAdded + ","
+		+ numBytesDeleted + "," + numBytesModified);
     }
 }

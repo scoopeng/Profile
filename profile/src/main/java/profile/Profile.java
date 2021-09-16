@@ -78,23 +78,20 @@ public class Profile
 	originalRoot.add(revisedRoot);
 	// Print out
 	System.out.println(CompareContext.getHeader());
-	System.out.println("Common");
 	for (String key : commonFiles)
 	{
 	    CompareContext originalcc = originalFiles.get(key);
-	    System.out.println(originalcc.toString());
+	    System.out.println(originalcc.getLine("modified"));
 	}
-	System.out.println("Deleted");
 	for (String key : deletedFiles)
 	{
 	    CompareContext originalcc = originalFiles.get(key);
-	    System.out.println(originalcc.toString());
+	    System.out.println(originalcc.getLine("deleted"));
 	}
-	System.out.println("Added");
 	for (String key : newFiles)
 	{
 	    CompareContext revisedcc = revisedFiles.get(key);
-	    System.out.println(revisedcc.toString());
+	    System.out.println(revisedcc.getLine("added"));
 	}
     }
 
@@ -217,21 +214,7 @@ public class Profile
 	List<String> revised = null;
 	try
 	{
-	    if (originalFile.exists() && !revisedFile.exists())
-	    {
-		// Should not get here
-		return;
-	    }
-	    if (!originalFile.exists() && revisedFile.exists())
-	    {
-		// Should not get here
-		return;
-	    }
-	    if (!originalFile.exists() && !revisedFile.exists())
-	    {
-		// Should not get here
-		return;
-	    } else
+	    if (originalFile.exists() && revisedFile.exists())
 	    {
 		cc.numFilesOriginal = 1;
 		cc.numFilesRevised = 1;
