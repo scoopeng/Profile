@@ -41,8 +41,8 @@ public class Profile
 	Map<String, CompareContext> fmap = new HashMap<>();
 	CompareContext root = walkDirectoryTrees(originalPath, revisedPath, "/", fmap, 1, null);
 	sumTree(root);
+	System.out.println(CompareContext.getHeader());
 	printTree(root);
-
     }
 
     private static void sumTree(CompareContext cc)
