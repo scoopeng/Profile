@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.github.difflib.DiffUtils;
 import com.github.difflib.patch.AbstractDelta;
@@ -24,6 +25,7 @@ import com.github.difflib.patch.Patch;
 public class Profile
 {
     private static String[] extensions = new String[] { ".java", ".js", ".html", ".gradle" };
+    private static Map<String, Integer> typeCounts = new HashMap<>();
 
     /**
      * @param args
@@ -43,6 +45,12 @@ public class Profile
 	sumTree(root);
 	System.out.println(CompareContext.getHeader());
 	printTree(root);
+	System.out.println();
+	System.out.println("Extension,Count");
+	for (Entry<String, Integer> countEntry : typeCounts.entrySet())
+	{
+	    System.out.println(countEntry.getKey() + "," + countEntry.getValue());
+	}
     }
 
     private static void sumTree(CompareContext cc)
@@ -140,6 +148,7 @@ public class Profile
 			level + 1, cc));
 	    } else
 	    {
+		registerExtension(filepath);
 		CompareContext filecc = new CompareContext();
 		filecc.directory = false;
 		filecc.level = level + 1;
@@ -163,6 +172,7 @@ public class Profile
 			level + 1, cc));
 	    } else
 	    {
+		registerExtension(filepath);
 		CompareContext filecc = new CompareContext();
 		filecc.directory = false;
 		filecc.level = level + 1;
@@ -188,6 +198,7 @@ public class Profile
 			level + 1, cc));
 	    } else
 	    {
+		registerExtension(filepath);
 		CompareContext filecc = new CompareContext();
 		filecc.directory = false;
 		filecc.level = level + 1;
@@ -200,6 +211,23 @@ public class Profile
 	    }
 	}
 	return cc;
+    }
+
+    private static void registerExtension(String filepath)
+    {
+	int index = filepath.lastIndexOf('.');
+	if (index >= 0)
+	{
+	    String ext = filepath.substring(index + 1);
+	    Integer curCount = typeCounts.get(ext);
+	    if (curCount == null)
+	    {
+		typeCounts.put(ext, 1);
+	    } else
+	    {
+		typeCounts.put(ext, curCount + 1);
+	    }
+	}
     }
 
     private static boolean validFile(File f)
