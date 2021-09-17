@@ -148,7 +148,6 @@ public class Profile
 			level + 1, cc));
 	    } else
 	    {
-		registerExtension(filepath);
 		CompareContext filecc = new CompareContext();
 		filecc.directory = false;
 		filecc.level = level + 1;
@@ -172,7 +171,6 @@ public class Profile
 			level + 1, cc));
 	    } else
 	    {
-		registerExtension(filepath);
 		CompareContext filecc = new CompareContext();
 		filecc.directory = false;
 		filecc.level = level + 1;
@@ -198,7 +196,6 @@ public class Profile
 			level + 1, cc));
 	    } else
 	    {
-		registerExtension(filepath);
 		CompareContext filecc = new CompareContext();
 		filecc.directory = false;
 		filecc.level = level + 1;
@@ -239,6 +236,7 @@ public class Profile
 	if (f.isFile())
 	{
 	    String name = f.getName();
+	    registerExtension(name);
 	    for (String ext : extensions)
 	    {
 		if (name.toLowerCase().endsWith(ext))
