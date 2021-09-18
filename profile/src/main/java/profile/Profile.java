@@ -5,6 +5,7 @@ package profile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +26,7 @@ import com.github.difflib.patch.Patch;
 public class Profile
 {
     private static String[] extensions = new String[] { ".java", ".js", ".html", ".gradle", ".json", ".xml",
-	    ".properties", ".gradle", ".bat", ".cmd", ".sql" };
+	    ".properties", ".gradle", ".bat", ".cmd", ".sql", ".xlt", ".xsd" };
     private static Map<String, Integer> typeCounts = new HashMap<>();
 
     /**
@@ -136,12 +137,12 @@ public class Profile
 	newNames.keySet().removeAll(originalnames.keySet());
 	Map<String, File> commonNames = new HashMap<>(originalnames);
 	commonNames.keySet().retainAll(revisednames.keySet());
-	for (String filepath : commonNames.keySet())
+	commonNames.keySet().parallelStream().forEach(filepath ->
 	{
 	    File f = new File(originalRoot + path + filepath);
 	    if (!validFile(f))
 	    {
-		continue;
+		return;
 	    }
 	    if (f.isDirectory())
 	    {
@@ -158,7 +159,7 @@ public class Profile
 		cc.children.add(filecc);
 		compareFiles(filecc);
 	    }
-	}
+	});
 	for (String filepath : newNames.keySet())
 	{
 	    File f = new File(revisedRoot + path + filepath);
@@ -304,8 +305,8 @@ public class Profile
 	    {
 		cc.numFilesOriginal = 1;
 		cc.numFilesRevised = 1;
-		original = Files.readAllLines(cc.originalFile.toPath());
-		revised = Files.readAllLines(cc.revisedFile.toPath());
+		original = Files.readAllLines(cc.originalFile.toPath(), Charset.forName("ISO-8859-1"));
+		revised = Files.readAllLines(cc.revisedFile.toPath(), Charset.forName("ISO-8859-1"));
 		cc.numBytesOriginal = cc.originalFile.length();
 		cc.numLinesOriginal = original.size();
 		cc.numBytesRevised = cc.revisedFile.length();
@@ -319,6 +320,25 @@ public class Profile
 	if (original == null || revised == null)
 	{
 	    return;
+	}
+
+	if (original.size() == revised.size())
+	{
+	    boolean same = true;
+	    int sz = original.size();
+	    for (int i = 0; i < sz; i++)
+	    {
+		if (!original.get(i).equals(revised.get(i)))
+		{
+		    same = false;
+		    break;
+		}
+	    }
+	    if (same)
+	    {
+		cc.type = "unchanged";
+		return;
+	    }
 	}
 
 	// compute the patch: this is the diffutils part
