@@ -24,7 +24,8 @@ import com.github.difflib.patch.Patch;
  */
 public class Profile
 {
-    private static String[] extensions = new String[] { ".java", ".js", ".html", ".gradle" };
+    private static String[] extensions = new String[] { ".java", ".js", ".html", ".gradle", ".json", ".xml",
+	    ".properties", ".gradle", ".bat", ".cmd", ".sql" };
     private static Map<String, Integer> typeCounts = new HashMap<>();
 
     /**
