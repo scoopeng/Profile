@@ -2,17 +2,17 @@
 <projectDescription>
 	<name>profile</name>
 	<comment></comment>
-	<projects/>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.buildship.core.gradleprojectbuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 		<nature>org.eclipse.buildship.core.gradleprojectnature</nature>
 	</natures>
-	<buildSpec>
-		<buildCommand>
-			<name>org.eclipse.buildship.core.gradleprojectbuilder</name>
-			<arguments/>
-		</buildCommand>
-	</buildSpec>
-	<linkedResources/>
-	<filteredResources/>
 </projectDescription>
